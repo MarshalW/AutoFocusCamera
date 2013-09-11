@@ -1,7 +1,7 @@
 package marshal.autofocus;
 
 import android.app.Activity;
-import android.hardware.Camera;
+import android.hardware.*;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -11,13 +11,17 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MyActivity extends Activity implements SurfaceHolder.Callback {
+public class MyActivity extends Activity implements SurfaceHolder.Callback,SensorEventListener {
 
     SurfaceView surfaceView;
 
     Camera camera;
 
     Timer timer;
+
+    private SensorManager sensorManager;
+
+    boolean needAutoFocus=true;
 
     /**
      * Called when the activity is first created.
@@ -31,6 +35,23 @@ public class MyActivity extends Activity implements SurfaceHolder.Callback {
         this.surfaceView.getHolder().setKeepScreenOn(true);
         this.surfaceView.getHolder().addCallback(this);
         timer = new Timer();
+
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause() {
+        sensorManager.unregisterListener(this);
+        super.onPause();
     }
 
     @Override
@@ -53,12 +74,15 @@ public class MyActivity extends Activity implements SurfaceHolder.Callback {
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
-                camera.autoFocus(new Camera.AutoFocusCallback() {
-                    @Override
-                    public void onAutoFocus(boolean b, Camera camera) {
-                        Log.d("autofocus",">>>>call camera auto focus");
-                    }
-                });
+                if(needAutoFocus){
+                    camera.autoFocus(new Camera.AutoFocusCallback() {
+                        @Override
+                        public void onAutoFocus(boolean b, Camera camera) {
+//                        Log.d("autofocus",">>>>call camera auto focus");
+                        }
+                    });
+                    needAutoFocus=false;
+                }
             }
         };
         timer.schedule(task, 1000, 1000);
@@ -70,5 +94,34 @@ public class MyActivity extends Activity implements SurfaceHolder.Callback {
         camera.stopPreview();
         camera.release();
         camera = null;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            getAccelerometer(sensorEvent);
+        }
+    }
+
+
+    private void getAccelerometer(SensorEvent sensorEvent) {
+        float[] values = sensorEvent.values;
+        // Movement
+        float x = values[0];
+        float y = values[1];
+        float z = values[2];
+
+        float accelationSquareRoot = (x * x + y * y + z * z)
+                / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
+
+        if (accelationSquareRoot >= 1.5){
+            Log.d("autofocus",">>>>>>>>>>>>>sensor accelation");
+            needAutoFocus=true;
+        }
+    }
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
 }
