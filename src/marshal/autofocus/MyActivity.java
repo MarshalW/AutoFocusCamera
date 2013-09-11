@@ -3,16 +3,21 @@ package marshal.autofocus;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MyActivity extends Activity implements SurfaceHolder.Callback {
 
     SurfaceView surfaceView;
 
     Camera camera;
+
+    Timer timer;
 
     /**
      * Called when the activity is first created.
@@ -25,6 +30,7 @@ public class MyActivity extends Activity implements SurfaceHolder.Callback {
         this.surfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         this.surfaceView.getHolder().setKeepScreenOn(true);
         this.surfaceView.getHolder().addCallback(this);
+        timer = new Timer();
     }
 
     @Override
@@ -43,10 +49,24 @@ public class MyActivity extends Activity implements SurfaceHolder.Callback {
         }
 
         camera.startPreview();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                camera.autoFocus(new Camera.AutoFocusCallback() {
+                    @Override
+                    public void onAutoFocus(boolean b, Camera camera) {
+                        Log.d("autofocus",">>>>call camera auto focus");
+                    }
+                });
+            }
+        };
+        timer.schedule(task, 1000, 1000);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
+        timer.cancel();
         camera.stopPreview();
         camera.release();
         camera = null;
