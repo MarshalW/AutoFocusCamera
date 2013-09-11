@@ -73,6 +73,17 @@ public class MyActivity extends Activity implements SurfaceHolder.Callback, Sens
 
         Camera.Parameters params = camera.getParameters();
 
+        //处理预览图片长宽比
+        List<Camera.Size> sizes=camera.getParameters().getSupportedPictureSizes();
+
+        StringBuilder builder=new StringBuilder();
+        for(Camera.Size size:sizes){
+            builder.append("w:"+size.width+", h:"+size.height).append(";");
+        }
+
+        Log.d("autofocus",">>>>>"+builder.toString());
+
+        //处理自动对焦参数
         List<String> focusModes = params.getSupportedFocusModes();
 
         String CAF_PICTURE = Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE,

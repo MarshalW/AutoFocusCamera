@@ -6,8 +6,8 @@
               android:background="#ffab0d">
     <SurfaceView
             android:id="@+id/surfaceView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="1080px"
+            android:layout_height="1440px"
             />
 </LinearLayout>
 
